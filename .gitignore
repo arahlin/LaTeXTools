@@ -4,4 +4,4 @@
 *.cache
 package-metadata.json
 .DS_Store
-
+*~
