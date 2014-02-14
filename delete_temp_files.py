@@ -12,6 +12,7 @@ else:
 
 import sublime_plugin
 import os
+import shutil
 
 class Delete_temp_filesCommand(sublime_plugin.WindowCommand):
 	def run(self):
@@ -23,11 +24,15 @@ class Delete_temp_filesCommand(sublime_plugin.WindowCommand):
 			return
 
 		self.tex_base, self.tex_ext = os.path.splitext(self.file_name)
+		self.out_root = getTeXRoot.get_out_root(view)
+		self.out_base = os.path.join(self.out_root,os.path.basename(self.tex_base))
 
+		if os.path.normpath(self.out_root) != os.path.normpath(os.path.dirname(self.tex_base)):
+			if os.path.isdir(self.out_root): shutil.rmtree(self.out_root)
 
-		# Delete the files.
+		# Delete the files with specified extensions.
 		temp_exts = ['.blg','.bbl','.aux','.log','.brf','.nlo','.out','.dvi','.ps',
-			'.lof','.toc','.fls','.fdb_latexmk','.pdfsync','.synctex.gz','.ind','.ilg','.idx']
+			     '.lof','.toc','.fls','.fdb_latexmk','.pdfsync','.synctex.gz','.ind','.ilg','.idx']
 
 		for temp_ext in temp_exts:
 			file_name_to_del = self.tex_base + temp_ext
@@ -37,4 +42,3 @@ class Delete_temp_filesCommand(sublime_plugin.WindowCommand):
 				os.remove(file_name_to_del)
 
 		sublime.status_message("Deleted the temp files")
-		

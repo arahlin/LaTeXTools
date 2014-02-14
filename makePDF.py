@@ -186,8 +186,8 @@ class CmdThread ( threading.Thread ):
 
 class make_pdfCommand(sublime_plugin.WindowCommand):
 
-	def run(self, cmd="", file_regex="", path=""):
-		
+	def run(self, cmd="", file_regex="", path="", working_dir=""):
+				
 		# Try to handle killing
 		if hasattr(self, 'proc') and self.proc: # if we are running, try to kill running process
 			self.output("\n\n### Got request to terminate compilation ###")
@@ -199,34 +199,46 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		
 		view = self.window.active_view()
 
+		# need this so that any relative paths are properly referenced
+		if (working_dir == "" and view and view.file_name()):
+			working_dir = os.path.dirname(view.file_name())
+		if working_dir:
+			os.chdir(working_dir)
+
 		self.file_name = getTeXRoot.get_tex_root(view)
 		if not os.path.isfile(self.file_name):
 			sublime.error_message(self.file_name + ": file not found.")
 			return
 
-		self.tex_base, self.tex_ext = os.path.splitext(self.file_name)
-		tex_dir = os.path.dirname(self.file_name)
+		tex_base, self.tex_ext = os.path.splitext(os.path.basename(self.file_name))
+		if not working_dir:
+			working_dir = os.path.dirname(self.file_name)
+			os.chdir(working_dir)
+		self.out_root = getTeXRoot.get_out_root(view)
+		# getTeXRoot.make_out_root(self.out_root,working_dir=working_dir)
+		self.tex_base = os.path.join(self.out_root,tex_base)
 		
 		# Extra paths
 		self.path = path
-			
+		
 		# Output panel: from exec.py
 		if not hasattr(self, 'output_view'):
 			self.output_view = self.window.get_output_panel("exec")
 
 		# Dumb, but required for the moment for the output panel to be picked
-        # up as the result buffer
+		# up as the result buffer
 		self.window.get_output_panel("exec")
 
 		self.output_view.settings().set("result_file_regex", "^([^:\n\r]*):([0-9]+):?([0-9]+)?:? (.*)$")
 		# self.output_view.settings().set("result_line_regex", line_regex)
-		self.output_view.settings().set("result_base_dir", tex_dir)
+		self.output_view.settings().set("result_base_dir", working_dir)
 
 		self.window.run_command("show_panel", {"panel": "output.exec"})
 
 		# Get parameters from sublime-build file:
-		self.make_cmd = cmd
-
+		outdir = os.path.relpath(self.out_root,start=os.getcwdu())
+		self.make_cmd = cmd + ["-outdir=%s" % outdir]
+		
 		# I actually think self.file_name is it already
 		self.engine = 'pdflatex' # Standard pdflatex
 		for line in codecs.open(self.file_name, "r", "UTF-8", "ignore").readlines():
@@ -270,7 +282,6 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 			return	
 		print (self.make_cmd + [self.file_name])
 		
-		os.chdir(tex_dir)
 		CmdThread(self).start()
 		print (threading.active_count())
 
@@ -338,8 +349,15 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		# self.output_view.end_edit(edit)
 		self.output_view.run_command("do_finish_edit")
 		if can_switch_to_pdf:
+			prefix,ext = os.path.splitext(os.path.basename(self.file_name))
+			inbase = os.path.join(self.out_root,prefix)
+			outbase,ext = os.path.splitext(self.file_name)
+			if inbase != outbase:
+				for ext in ['.pdf','.synctex.gz']:
+					print(inbase+ext)
+					print(outbase+ext)
+					os.rename(inbase+ext,outbase+ext)
 			self.window.active_view().run_command("jump_to_pdf", {"from_keybinding": False})
-
 
 class DoOutputEditCommand(sublime_plugin.TextCommand):
     def run(self, edit, data, selection_was_at_end):

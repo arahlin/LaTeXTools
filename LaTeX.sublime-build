@@ -14,6 +14,7 @@
 	// General settings; DO NOT MODIFY!!!
 	"target": "make_pdf",
 	"selector": "text.tex.latex",
+	"working_dir": "${project_path:${folder}}",
 
 	// Mac-specific settings
 	// ---------------------
@@ -34,7 +35,7 @@
 		// backward/forward search, forcing compilation (e.g. even if no bib file is found)
 		// and producing pdf rather than dvi output
 		"cmd": ["latexmk", "-cd",
-				"-e", "\\$pdflatex = '%E -interaction=nonstopmode -synctex=1 %S %O'",
+				"-e", "\\$pdflatex = '%E -interaction=nonstopmode -synctex=1 %O %S'",
 				//"-silent",
 				"-f", "-pdf"],
 
@@ -119,7 +120,7 @@
 		// backward/forward search, forcing compilation (e.g. even if no bib file is found)
 		// and producing pdf rather than dvi output
 		"cmd": ["latexmk", "-cd",
-				"-e", "\\$pdflatex='%E -interaction=nonstopmode -synctex=1 %S %O'",
+				"-e", "\\$pdflatex='%E -interaction=nonstopmode -synctex=1 %O %S'",
 				"-f", "-pdf"],
 
 		// Paths to TeX binaries; needed as GUI apps do not inherit

@@ -37,11 +37,11 @@ class jump_to_pdfCommand(sublime_plugin.TextCommand):
 			forward_sync = True
 		print (from_keybinding, keep_focus, forward_sync)
 
-		texFile, texExt = os.path.splitext(self.view.file_name())
+		texFile, texExt = os.path.splitext(getTeXRoot.get_tex_file(self.view))
 		if texExt.upper() != ".TEX":
-			sublime.error_message("%s is not a TeX source file: cannot jump." % (os.path.basename(view.fileName()),))
+			sublime.error_message("%s is not a TeX source file: cannot jump." % (os.path.basename(view.file_name()),))
 			return
-		quotes = "\""
+		# quotes = "\""
 		srcfile = texFile + u'.tex'
 		root = getTeXRoot.get_tex_root(self.view)
 		print ("!TEX root = ", repr(root) ) # need something better here, but this works.
